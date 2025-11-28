@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ChatGPT Style App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      height: 100vh;
+      display: flex;
+      background: #050816;
+      color: #e5e7eb;
+      overflow: hidden;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      max-width: 320px;
+      background: #020617;
+      border-right: 1px solid #111827;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-header {
+      padding: 10px;
+      border-bottom: 1px solid #111827;
+    }
+
+    .new-chat-btn {
+      width: 100%;
+      background: #111827;
+      border-radius: 8px;
+      border: 1px solid #1f2937;
+      padding: 10px 12px;
+      font-size: 0.9rem;
+      color: #e5e7eb;
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+
+    .new-chat-btn:hover {
+      background: #1f2937;
+      transform: translateY(-1px);
+    }
+
+    .new-chat-btn span.icon {
+      display: inline-flex;
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      border: 1px solid #9ca3af;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .chat-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 8px 12px;
+      font-size: 0.82rem;
+    }
+
+    .chat-item {
+      padding: 8px 10px;
+      border-radius: 8px;
+      margin-bottom: 4px;
+      cursor: pointer;
+      color: #d1d5db;
+      border: 1px solid transparent;
+      transition: background 0.15s, border 0.15s;
+    }
+
+    .chat-item.active {
+      background: #111827;
+      border-color: #374151;
+    }
+
+    .chat-item:hover {
+      background: #020617;
+      border-color: #1f2937;
+    }
+
+    .sidebar-footer {
+      padding: 8px 10px;
+      border-top: 1px solid #111827;
+      font-size: 0.75rem;
+      color: #6b7280;
+    }
+
+    /* Main chat area */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: radial-gradient(circle at top, #020617, #020617 40%, #020617 60%, #020617);
+      position: relative;
+    }
+
+    /* subtle gradient glow */
+    .glow {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(56,189,248,0.17), transparent 55%),
+        radial-gradient(circle at 80% 0%, rgba(34,197,94,0.17), transparent 55%);
+      opacity: 0.9;
+    }
+
+    .main-header {
+      position: relative;
+      z-index: 1;
+      padding: 8px 16px;
+      border-bottom: 1px solid #111827;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      border: 2px solid #22c55e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      box-shadow: 0 0 12px rgba(34,197,94,0.7);
+    }
+
+    .logo-text {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #e5e7eb;
+    }
+
+    .header-badge {
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(148,163,184,0.12);
+      border: 1px solid rgba(148,163,184,0.4);
+      color: #9ca3af;
+    }
+
+    .chat-container {
+      position: relative;
+      z-index: 1;
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 0 14px;
+    }
+
+    .chat-inner {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 0 14px 60px;
+    }
+
+    .empty-state {
+      text-align: center;
+      margin-top: 40px;
+      margin-bottom: 18px;
+      color: #9ca3af;
+      font-size: 0.98rem;
+    }
+
+    .empty-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #e5e7eb;
+      margin-bottom: 4px;
+    }
+
+    .chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 10px;
+      font-size: 0.8rem;
+    }
+
+    .chip {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid #374151;
+      background: #020617;
+      cursor: pointer;
+      color: #d1d5db;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+
+    .chip:hover {
+      background: #111827;
+      transform: translateY(-1px);
+    }
+
+    .message {
+      display: flex;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      margin-bottom: 6px;
+    }
+
+    .message.user {
+      background: #020617;
+    }
+
+    .message.bot {
+      background: #030712;
+      border-top: 1px solid #111827;
+      border-bottom: 1px solid #111827;
+    }
+
+    .avatar {
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .avatar.user {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+    }
+
+    .avatar.bot {
+      background: linear-gradient(135deg, #0ea5e9, #6366f1);
+    }
+
+    .msg-content {
+      flex: 1;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .msg-meta {
+      font-size: 0.7rem;
+      color: #6b7280;
+      margin-top: 3px;
+    }
+
+    /* Input area */
+    .input-area-wrapper {
+      position: relative;
+      z-index: 2;
+      border-top: 1px solid #111827;
+      background: linear-gradient(to top, #020617, rgba(2,6,23,0.85));
+      padding: 10px 14px 12px;
+    }
+
+    .input-inner {
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    .input-box {
+      display: flex;
+      gap: 8px;
+      padding: 8px;
+      border-radius: 16px;
+      background: #020617;
+      border: 1px solid #374151;
+    }
+
+    .input-box textarea {
+      flex: 1;
+      max-height: 120px;
+      min-height: 22px;
+      border: none;
+      resize: none;
+      outline: none;
+      background: transparent;
+      color: #e5e7eb;
+      font-size: 0.85rem;
+    }
+
+    .input-box textarea::placeholder {
+      color: #6b7280;
+    }
+
+    .send-btn {
+      align-self: flex-end;
+      border-radius: 999px;
+      border: none;
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: linear-gradient(135deg, #0ea5e9, #6366f1);
+      color: white;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 8px 18px rgba(37,99,235,0.5);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s;
+    }
+
+    .send-btn:disabled {
+      opacity: 0.5;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    .send-btn:active {
+      transform: translateY(1px) scale(0.98);
+      box-shadow: 0 4px 10px rgba(37,99,235,0.5);
+    }
+
+    .helper-text {
+      font-size: 0.7rem;
+      color: #6b7280;
+      margin-top: 4px;
+      text-align: center;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar (left) -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <button class="new-chat-btn" id="newChatBtn">
+        <span class="icon">+</span>
+        <span>New chat</span>
+      </button>
+    </div>
+    <div class="chat-list" id="chatList">
+      <div class="chat-item active">New chat</div>
+    </div>
+    <div class="sidebar-footer">
+      Demo ChatGPT-style app (frontend only).<br />
+      Made with HTML + CSS + JS.
+    </div>
+  </aside>
+
+  <!-- Main area (right) -->
+  <main class="main">
+    <div class="glow"></div>
+
+    <header class="main-header">
+      <div class="logo">
+        <div class="logo-icon">∞</div>
+        <div class="logo-text">ChatGPT Clone (Demo)</div>
+      </div>
+      <div class="header-badge">Local rule-based bot</div>
+    </header>
+
+    <section class="chat-container">
+      <div class="chat-inner" id="chatInner">
+        <div class="empty-state" id="emptyState">
+          <div class="empty-title">How can I help you today?</div>
+          <div>Ask any question. This is a <b>demo UI</b> like ChatGPT.</div>
+          <div class="chips-row">
+            <button class="chip" data-prompt="Explain JavaScript in simple words.">
+              Explain JavaScript
+            </button>
+            <button class="chip" data-prompt="Create a daily study plan for Python.">
+              Python study plan
+            </button>
+            <button class="chip" data-prompt="Give me tips to focus on studies.">
+              Focus tips
+            </button>
+            <button class="chip" data-prompt="Explain what is AI in one paragraph.">
+              What is AI?
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="input-area-wrapper">
+      <div class="input-inner">
+        <div class="input-box">
+          <textarea
+            id="inputArea"
+            rows="1"
+            placeholder="Message ChatGPT… (Press Enter to send, Shift+Enter for new line)"
+          ></textarea>
+          <button class="send-btn" id="sendBtn">
+            <span>Send</span>
+            <span>➤</span>
+          </button>
+        </div>
+        <div class="helper-text">
+          This is a <strong>frontend demo</strong> – no real AI server connected.  
+          You can later connect it to OpenAI / any backend API.
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    const chatInner = document.getElementById("chatInner");
+    const emptyState = document.getElementById("emptyState");
+    const inputArea = document.getElementById("inputArea");
+    const sendBtn = document.getElementById("sendBtn");
+    const newChatBtn = document.getElementById("newChatBtn");
+    const chatList = document.getElementById("chatList");
+
+    function setEmptyVisible(show) {
+      emptyState.style.display = show ? "block" : "none";
+    }
+
+    function addMessage(text, sender = "user") {
+      setEmptyVisible(false);
+
+      const wrapper = document.createElement("div");
+      wrapper.className = `message ${sender}`;
+
+      const avatar = document.createElement("div");
+      avatar.className = `avatar ${sender}`;
+      avatar.textContent = sender === "user" ? "U" : "AI";
+
+      const content = document.createElement("div");
+      const msgText = document.createElement("div");
+      msgText.className = "msg-content";
+      msgText.textContent = text;
+
+      const meta = document.createElement("div");
+      meta.className = "msg-meta";
+      meta.textContent = sender === "user" ? "You" : "ChatGPT-style bot";
+
+      content.appendChild(msgText);
+      content.appendChild(meta);
+
+      wrapper.appendChild(avatar);
+      wrapper.appendChild(content);
+
+      chatInner.appendChild(wrapper);
+      chatInner.scrollTop = chatInner.scrollHeight;
+    }
+
+    // Simple demo "AI" logic (rule-based)
+    function getBotReply(prompt) {
+      const msg = prompt.toLowerCase();
+
+      if (!msg.trim()) {
+        return "Please type something so I can reply 🙂";
+      }
+
+      if (msg.includes("python")) {
+        return "Python ek powerful programming language hai jo backend, scripting, automation, AI, machine learning sab ke liye use hoti hai. Start karne ke liye: variables, loops, functions, lists, dictionaries and small projects.";
+      }
+
+      if (msg.includes("javascript") || msg.includes("js")) {
+        return "JavaScript browser me chalne wali language hai jo websites ko interactive banati hai. Aap JS se animations, forms, APIs, games, sab bana sakte ho.";
+      }
+
+      if (msg.includes("ai") || msg.includes("artificial intelligence")) {
+        return "AI (Artificial Intelligence) ka matlab hai aisi machines/software jo human jaisa sochne, learn karne ya decision lene ki koshish karte hain. Example: ChatGPT, recommendation systems, face recognition, etc.";
+      }
+
+      if (msg.includes("hello") || msg.includes("hi") || msg.includes("namaste")) {
+        return "Namaste 👋, main ek demo ChatGPT-style bot hoon (frontend only). Aap mujhse technology, coding ya general questions puch sakte ho.";
+      }
+
+      if (msg.includes("plan") || msg.includes("study") || msg.includes("padhai")) {
+        return "Ek simple study plan:\n• Daily 1–2 ghanta fixed time choose karo.\n• 30 min new concept, 30 min practice.\n• Distraction free environment.\n• Weekly ek chhota project ya revision.\nConsistency sabse important hai 🔁";
+      }
+
+      if (msg.includes("who are you") || msg.includes("tum kaun ho") || msg.includes("what are you")) {
+        return "Main ek simple JavaScript se bana ChatGPT-style UI bot hoon. Real AI backend abhi connect nahi hai, bas local rules pe reply de raha hoon 🙂";
+      }
+
+      // Default generic answer
+      return (
+        "Mere paas abhi real AI server nahi hai, isliye main simple rule-based reply de raha hoon.\n\n" +
+        "Aapne likha: \"" + prompt + "\"\n\n" +
+        "Is type ke project ko real ChatGPT jaisa banane ke liye aap:\n" +
+        "1) Backend (Node.js / Python) banaoge\n" +
+        "2) OpenAI ya kisi LLM API se connect karoge\n" +
+        "3) Iss UI se fetch() ke through backend call karoge."
+      );
+    }
+
+    function handleSend() {
+      const text = inputArea.value.trim();
+      if (!text) return;
+
+      addMessage(text, "user");
+      inputArea.value = "";
+      autoResize();
+
+      sendBtn.disabled = true;
+
+      setTimeout(() => {
+        const reply = getBotReply(text);
+        addMessage(reply, "bot");
+        sendBtn.disabled = false;
+      }, 400);
+    }
+
+    // Auto textarea resize
+    function autoResize() {
+      inputArea.style.height = "auto";
+      inputArea.style.height = inputArea.scrollHeight + "px";
+    }
+
+    inputArea.addEventListener("input", autoResize);
+
+    inputArea.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        handleSend();
+      }
+    });
+
+    sendBtn.addEventListener("click", handleSend);
+
+    // New chat clear
+    newChatBtn.addEventListener("click", () => {
+      chatInner.innerHTML = "";
+      setEmptyVisible(true);
+      const items = chatList.querySelectorAll(".chat-item");
+      items.forEach((i) => i.classList.remove("active"));
+      if (items.length === 0) {
+        const item = document.createElement("div");
+        item.className = "chat-item active";
+        item.textContent = "New chat";
+        chatList.appendChild(item);
+      } else {
+        items[0].classList.add("active");
+        items[0].textContent = "New chat";
+      }
+    });
+
+    // Prompt chips -> fill and send
+    document.querySelectorAll(".chip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        const prompt = chip.getAttribute("data-prompt");
+        inputArea.value = prompt;
+        autoResize();
+        handleSend();
+      });
+    });
+
+    // Initial state
+    setEmptyVisible(true);
+  </script>
+</body>
+</html>
